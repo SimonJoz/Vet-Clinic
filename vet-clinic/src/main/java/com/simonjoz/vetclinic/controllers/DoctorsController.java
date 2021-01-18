@@ -1,6 +1,6 @@
 package com.simonjoz.vetclinic.controllers;
 
-import com.simonjoz.vetclinic.domain.dto.DoctorAppointmentDTO;
+import com.simonjoz.vetclinic.domain.dto.AppointmentDTO;
 import com.simonjoz.vetclinic.domain.dto.DoctorDTO;
 import com.simonjoz.vetclinic.domain.dto.PageDTO;
 import com.simonjoz.vetclinic.service.DoctorsService;
@@ -39,7 +39,7 @@ public class DoctorsController {
     @ApiOperation(value = "Get all appointments by doctor id", notes = "Method is used to fetch appointments " +
             "page for doctor with specified id. Method takes optional argument of date in order to narrow result to certain period. " +
             "It is also sortable depend on specified params.")
-    public PageDTO<DoctorAppointmentDTO> getAppointmentsPageByDoctorId(
+    public PageDTO<AppointmentDTO> getAppointmentsPageByDoctorId(
             @RequestParam(defaultValue = PageReqUtils.PAGE_ZERO, required = false)
             @ApiParam(value = "Page number") int page,
 

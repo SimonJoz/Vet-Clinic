@@ -1,7 +1,7 @@
 package com.simonjoz.vetclinic.service;
 
 import com.simonjoz.vetclinic.domain.Doctor;
-import com.simonjoz.vetclinic.domain.dto.DoctorAppointmentDTO;
+import com.simonjoz.vetclinic.domain.dto.AppointmentDTO;
 import com.simonjoz.vetclinic.domain.dto.DoctorDTO;
 import com.simonjoz.vetclinic.domain.dto.PageDTO;
 import com.simonjoz.vetclinic.exceptions.ResourceNotFoundException;
@@ -34,7 +34,7 @@ public class DoctorsService {
         return resultPage;
     }
 
-    public PageDTO<DoctorAppointmentDTO> getAppointmentsPageById(PageRequest pageRequest, Long doctorId, LocalDate date) {
+    public PageDTO<AppointmentDTO> getAppointmentsPageById(PageRequest pageRequest, Long doctorId, LocalDate date) {
         if (date == null) {
             log.debug("Date is not present. Performing getAppointmentsPageByDoctorId() method.");
             return appointmentsService.getAppointmentsPageByDoctorId(pageRequest, doctorId);

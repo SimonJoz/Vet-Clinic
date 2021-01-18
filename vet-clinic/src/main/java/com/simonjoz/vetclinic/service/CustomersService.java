@@ -4,7 +4,7 @@ import com.simonjoz.vetclinic.domain.Appointment;
 import com.simonjoz.vetclinic.domain.AppointmentRequest;
 import com.simonjoz.vetclinic.domain.Customer;
 import com.simonjoz.vetclinic.domain.Doctor;
-import com.simonjoz.vetclinic.domain.dto.CustomerAppointmentDTO;
+import com.simonjoz.vetclinic.domain.dto.AppointmentDTO;
 import com.simonjoz.vetclinic.domain.dto.CustomerDTO;
 import com.simonjoz.vetclinic.domain.dto.PageDTO;
 import com.simonjoz.vetclinic.exceptions.InvalidPinException;
@@ -36,11 +36,11 @@ public class CustomersService {
         return resultPage;
     }
 
-    public PageDTO<CustomerAppointmentDTO> getAppointmentsPageById(PageRequest pageRequest, Long customerId) {
+    public PageDTO<AppointmentDTO> getAppointmentsPageById(PageRequest pageRequest, Long customerId) {
         return appointmentsService.getAppointmentsPageByCustomerId(pageRequest, customerId);
     }
 
-    public CustomerAppointmentDTO makeAppointment(AppointmentRequest appointmentReq, Long customerId) {
+    public AppointmentDTO makeAppointment(AppointmentRequest appointmentReq, Long customerId) {
         Customer customer = getCustomer(customerId);
         validateCustomerPin(customer.getPin(), appointmentReq.getCustomerPin());
 

@@ -1,7 +1,7 @@
 package com.simonjoz.vetclinic.controllers;
 
 import com.simonjoz.vetclinic.domain.AppointmentRequest;
-import com.simonjoz.vetclinic.domain.dto.CustomerAppointmentDTO;
+import com.simonjoz.vetclinic.domain.dto.AppointmentDTO;
 import com.simonjoz.vetclinic.domain.dto.CustomerDTO;
 import com.simonjoz.vetclinic.domain.dto.PageDTO;
 import com.simonjoz.vetclinic.service.CustomersService;
@@ -35,7 +35,7 @@ public class CustomersController {
 
     @GetMapping("{customerId}/appointments")
     @ApiOperation("Method is used to fetch appointments page for customers with specified id. Page is sortable depend on specified params.")
-    public PageDTO<CustomerAppointmentDTO> getAppointmentsPageByCustomerId(
+    public PageDTO<AppointmentDTO> getAppointmentsPageByCustomerId(
             @RequestParam(defaultValue = PageReqUtils.PAGE_ZERO, required = false) int page,
             @RequestParam(defaultValue = PageReqUtils.DEFAULT_SIZE, required = false) int pageSize,
             @RequestParam(defaultValue = PageReqUtils.DEFAULT_SORT_BY, required = false) String sortBy,
@@ -47,7 +47,7 @@ public class CustomersController {
 
     @PostMapping("{customerId}/appointments/create")
     @ApiOperation("Method is used to create new appointments with specified doctor for customers with given id. Page is sortable depend on specified params.")
-    public ResponseEntity<CustomerAppointmentDTO> makeAppointment(
+    public ResponseEntity<AppointmentDTO> makeAppointment(
             @RequestBody AppointmentRequest appointmentRequest, @PathVariable Long customerId) {
         var dto = customersService.makeAppointment(appointmentRequest, customerId);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
