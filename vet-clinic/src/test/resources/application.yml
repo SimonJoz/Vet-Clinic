@@ -1,22 +1,18 @@
+server:
+  port: 1111
+
 spring:
-  h2:
-    console:
-      enabled: true
-      path: /h2
+  profiles:
+    active: test
   datasource:
-    url: jdbc:h2:mem:test
+    url: jdbc:h2:mem:testdb
     driverClassName: org.h2.Driver
     username: sa
     password:
-    initialization-mode: always
-    data: classpath:dev.sql
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
     hibernate:
       ddl-auto: create
-
-logging:
-  level:
-    com:
-      simonjoz: debug
+  application:
+    appointment-duration: 30  # value in minutes is required

@@ -14,8 +14,9 @@ VALUES (1, 1234, 'CUSTOMER1', 'SURNAME1'),
        (5, 1234, 'CUSTOMER5', 'SURNAME5');
 
 
-INSERT INTO appointments (id, note, scheduled_date, customer_id, doctor_id)
-VALUES (1, 'APPOINTMENT1', '2021-01-21', 1, 1),
-       (2, 'APPOINTMENT2', '2021-01-22', 1, 2),
-       (3, 'APPOINTMENT3', '2021-01-23', 2, 1),
-       (4, 'APPOINTMENT4', '2021-01-24', 2, 2);
+
+INSERT INTO appointments (id, note, scheduled_date, scheduled_time, timestamp, customer_id, doctor_id)
+VALUES (1, 'APPOINTMENT1', '2022-01-21', '12:00', '2022-01-21 12:00', 1, 1),
+       (2, 'APPOINTMENT2', '2022-01-22', '12:00', '2022-01-22 12:00', 1, 2),
+       (3, 'APPOINTMENT3', '2022-01-23', '12:00', '2022-01-23 12:00', 2, 1),
+       (4, 'APPOINTMENT4', '2022-01-24', '12:00', '2022-01-24 12:00', 2, 2);
