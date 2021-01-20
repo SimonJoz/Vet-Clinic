@@ -12,14 +12,7 @@ public class PageReqUtils {
 
 
     public static PageRequest getPageRequest(int page, int size, String sortBy, boolean desc) {
-        if (page < 0) {
-            throw new IllegalArgumentException("Pages index must not be less than zero !");
-        }
-        if (size <= 0) {
-            throw new IllegalArgumentException("Page size must not be less than one!");
-        }
-
-        PageRequest pageRequest = PageRequest.of(page, size); // default sort will by performed
+        PageRequest pageRequest = PageRequest.of(page, size);
         if (sortBy != null && !"".equals(sortBy.trim())) {
             if (desc) {
                 pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortBy));

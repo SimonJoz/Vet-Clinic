@@ -53,14 +53,14 @@
             <scope>provided</scope>
         </dependency>
 
-<!--  Please uncomment if needed !!! -->
-<!-- IntelliJ pre 2018.1.1 requires the mapstruct processor to be present as provided dependency -->
-<!--        <dependency>-->
-<!--            <groupId>org.mapstruct</groupId>-->
-<!--            <artifactId>mapstruct-processor</artifactId>-->
-<!--            <version>${org.mapstruct.version}</version>-->
-<!--            <scope>provided</scope>-->
-<!--        </dependency>-->
+        <!--  Please uncomment if needed !!! -->
+        <!-- IntelliJ pre 2018.1.1 requires the mapstruct processor to be present as provided dependency -->
+        <!--        <dependency>-->
+        <!--            <groupId>org.mapstruct</groupId>-->
+        <!--            <artifactId>mapstruct-processor</artifactId>-->
+        <!--            <version>${org.mapstruct.version}</version>-->
+        <!--            <scope>provided</scope>-->
+        <!--        </dependency>-->
 
         <dependency>
             <groupId>org.mapstruct</groupId>
@@ -80,7 +80,7 @@
             <version>2.9.2</version>
         </dependency>
 
-        <!-- Explicit update to prevent well known Illegal DefaultValue warning issue -->
+        <!-- This update prevent swagger Illegal DefaultValue warning issue -->
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-models</artifactId>

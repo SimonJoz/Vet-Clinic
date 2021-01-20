@@ -1,33 +1,45 @@
 package com.simonjoz.vetclinic.service;
 
 import com.simonjoz.vetclinic.domain.Appointment;
+import com.simonjoz.vetclinic.domain.AppointmentRequest;
 import com.simonjoz.vetclinic.domain.dto.AppointmentDTO;
 import com.simonjoz.vetclinic.domain.dto.PageDTO;
+import com.simonjoz.vetclinic.exceptions.RemovalFailureException;
+import com.simonjoz.vetclinic.exceptions.UnavailableDateException;
 import com.simonjoz.vetclinic.mappers.CustomerAppointmentMapper;
 import com.simonjoz.vetclinic.mappers.PagesMapper;
 import com.simonjoz.vetclinic.repository.AppointmentsRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AppointmentsService {
 
+    // NOTE: Injection through field is not recommended but in this case
+    // there is no performance hit as primitive type does not require any dependencies to be injected before initialization.
+    // Must not be final otherwise constructor injection will be performed without require @Value causing exception.
+
+    @Value("${spring.application.appointment-duration}")
+    private long appointmentDuration;
+
     private final AppointmentsRepo appointmentsRepo;
     private final CustomerAppointmentMapper customerAppointmentsMapper;
     private final PagesMapper<AppointmentDTO> pageMapper;
 
-
-    public PageDTO<AppointmentDTO> getAppointmentsPageByDoctorIdForDay(PageRequest pageRequest, Long doctorId, LocalDate date) {
+    public PageDTO<AppointmentDTO> getAppointmentsPageByDoctorIdForDate(PageRequest pageRequest, Long doctorId, LocalDate date) {
         log.info("Fetching appointments for doctor with id: '{}' matching date: '{}'. '{}' ", doctorId, date, pageRequest);
         Page<AppointmentDTO> appointmentsPage = appointmentsRepo.getDoctorAppointmentsPage(doctorId, date, pageRequest);
-        log.debug("Retrieved page: '{}' ", appointmentsPage);
         PageDTO<AppointmentDTO> resultPage = pageMapper.map(appointmentsPage);
         log.debug("Returned data: '{}' ", resultPage);
         return resultPage;
@@ -36,17 +48,6 @@ public class AppointmentsService {
     public PageDTO<AppointmentDTO> getAppointmentsPageByDoctorId(PageRequest pageRequest, Long doctorId) {
         log.info("Fetching appointments for doctor with id: '{}'. '{}' ", doctorId, pageRequest);
         Page<AppointmentDTO> appointmentsPage = appointmentsRepo.getDoctorAppointmentsPage(doctorId, pageRequest);
-        log.debug("Retrieved page: '{}' ", appointmentsPage);
-        PageDTO<AppointmentDTO> resultPage = pageMapper.map(appointmentsPage);
-        log.debug("Returned data: '{}' ", resultPage);
-        return resultPage;
-    }
-
-    public PageDTO<AppointmentDTO> getAppointmentsPageByCustomerId(PageRequest pageRequest, Long customerId) {
-        log.info("Fetching appointments for customer with id: '{}'. '{}'", customerId, pageRequest);
-        Page<AppointmentDTO> appointmentsPage =
-                appointmentsRepo.getCustomerAppointmentsPage(customerId, pageRequest);
-        log.debug("Retrieved page: '{}' ", appointmentsPage);
         PageDTO<AppointmentDTO> resultPage = pageMapper.map(appointmentsPage);
         log.debug("Returned data: '{}' ", resultPage);
         return resultPage;
@@ -55,9 +56,49 @@ public class AppointmentsService {
     public AppointmentDTO addAppointment(Appointment appointment) {
         log.info("Creating new appointment '{}'.", appointment);
         Appointment savedAppointment = appointmentsRepo.save(appointment);
-        log.debug("Created appointment: {}.", appointment);
+        log.debug("Saved appointment entity: {}.", appointment);
         AppointmentDTO appointmentDTO = customerAppointmentsMapper.map(savedAppointment);
         log.debug("Return value of appointment dto: {}.", appointmentDTO);
+        log.info("Appointment added successfully.");
         return appointmentDTO;
     }
+
+    public void checkDateAvailabilityForDoctor(AppointmentRequest appointmentReq) {
+        log.info("Checking date and time availability for request: {}", appointmentReq);
+
+        LocalTime startTime = appointmentReq.getTime().minusMinutes(appointmentDuration);
+        LocalTime endTime = appointmentReq.getTime().plusMinutes(appointmentDuration);
+
+        log.debug("Range of time to be check: [start: {}], [end: {}].", startTime, endTime);
+
+        boolean isAvailable = appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(appointmentReq.getDoctorId(),
+                appointmentReq.getDate(), startTime, endTime);
+
+        log.debug("Is date available: {}", isAvailable);
+
+        LocalDateTime appointmentTimestamp = LocalDateTime.of(appointmentReq.getDate(), appointmentReq.getTime());
+        String formattedTimestamp = appointmentTimestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        throwExceptionIfDateNotAvailability(isAvailable, formattedTimestamp);
+    }
+
+    public void deleteAppointment(Long customerId, LocalDateTime appointmentTimestamp) {
+        log.info("Removing appointment with timestamp '{}' of user with id '{}'.", appointmentTimestamp, customerId);
+        appointmentsRepo.deleteByCustomerIdAndTimestamp(customerId, appointmentTimestamp);
+
+        // TODO: Should I check entity existence explicitly ?? Is it good practice ??
+        boolean exist = appointmentsRepo.existsByCustomerIdAndTimestamp(customerId, appointmentTimestamp);
+        if (exist) {
+            throw new RemovalFailureException("Appointment cancellation has failed !");
+        }
+        log.info("Removal transaction completed.");
+    }
+
+    private void throwExceptionIfDateNotAvailability(boolean isAvailable, String appointmentTimestamp) {
+        if (!isAvailable) {
+            String errMsg = String.format("Cannot make appointment at '%s'. Please try schedule appointment at different time.", appointmentTimestamp);
+            throw new UnavailableDateException(errMsg);
+        }
+    }
+
+
 }
