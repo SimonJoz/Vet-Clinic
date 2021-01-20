@@ -8,14 +8,19 @@ import com.simonjoz.vetclinic.service.CustomersService;
 import com.simonjoz.vetclinic.utils.PageReqUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
+import static com.simonjoz.vetclinic.utils.PageReqUtils.*;
+
 @RestController
-@Api("Customers")
+@Api(tags = "Customers")
 @RequestMapping("api/v1/customers")
 @RequiredArgsConstructor
 public class CustomersController {
@@ -23,34 +28,38 @@ public class CustomersController {
     private final CustomersService customersService;
 
     @GetMapping
-    @ApiOperation("Method is used to fetch customers page. Page is sortable depend on specified params.")
+    @ApiOperation(value = "Fetch customers page",
+            notes = "Method is used to fetch customers page. Page is sortable depend on specified params.")
     public PageDTO<CustomerDTO> getCustomersPage(
-            @RequestParam(defaultValue = PageReqUtils.PAGE_ZERO, required = false) int page,
-            @RequestParam(defaultValue = PageReqUtils.DEFAULT_SIZE, required = false) int pageSize,
-            @RequestParam(defaultValue = PageReqUtils.DEFAULT_SORT_BY, required = false) String sortBy,
-            @RequestParam(defaultValue = PageReqUtils.DESC_FALSE, required = false) boolean isDesc) {
+            @RequestParam(defaultValue = PAGE_ZERO, required = false) int page,
+            @RequestParam(defaultValue = DEFAULT_SIZE, required = false) int pageSize,
+            @RequestParam(defaultValue = DEFAULT_SORT_BY, required = false) String sortBy,
+            @RequestParam(defaultValue = DESC_FALSE, required = false)
+            @ApiParam(value = "Sort direction descending ?") boolean isDesc) {
         PageRequest pageRequest = PageReqUtils.getPageRequest(page, pageSize, sortBy, isDesc);
         return customersService.getPage(pageRequest);
     }
 
-    @GetMapping("{customerId}/appointments")
-    @ApiOperation("Method is used to fetch appointments page for customers with specified id. Page is sortable depend on specified params.")
-    public PageDTO<AppointmentDTO> getAppointmentsPageByCustomerId(
-            @RequestParam(defaultValue = PageReqUtils.PAGE_ZERO, required = false) int page,
-            @RequestParam(defaultValue = PageReqUtils.DEFAULT_SIZE, required = false) int pageSize,
-            @RequestParam(defaultValue = PageReqUtils.DEFAULT_SORT_BY, required = false) String sortBy,
-            @RequestParam(defaultValue = PageReqUtils.DESC_FALSE, required = false) boolean isDesc,
-            @PathVariable Long customerId) {
-        PageRequest pageRequest = PageReqUtils.getPageRequest(page, pageSize, sortBy, isDesc);
-        return customersService.getAppointmentsPageById(pageRequest, customerId);
+    @PostMapping("{customerId}/appointments/add")
+    @ApiOperation(value = "Schedule appointment", notes = "Method is used to create new appointment " +
+            "with specified doctor at certain date and time, for customer with given id. " +
+            "In order to make appointment valid pin number must be provided. " +
+            "Default appointment duration is set for 30 minutes and can be modified in properties file. " +
+            "Doctor availability is validated based on appointment duration.")
+    public ResponseEntity<AppointmentDTO> makeAppointment(
+            @Valid @RequestBody AppointmentRequest appointmentReq, @PathVariable Long customerId) {
+        var appointmentDTO = customersService.makeAppointment(appointmentReq, customerId);
+        return new ResponseEntity<>(appointmentDTO, HttpStatus.CREATED);
     }
 
-    @PostMapping("{customerId}/appointments/create")
-    @ApiOperation("Method is used to create new appointments with specified doctor for customers with given id. Page is sortable depend on specified params.")
-    public ResponseEntity<AppointmentDTO> makeAppointment(
-            @RequestBody AppointmentRequest appointmentRequest, @PathVariable Long customerId) {
-        var dto = customersService.makeAppointment(appointmentRequest, customerId);
-        return new ResponseEntity<>(dto, HttpStatus.CREATED);
+    @DeleteMapping("{customerId}/appointments/cancel")
+    @ApiOperation(value = "Cancel appointment", notes = "Method is used to cancel (delete) appointment with " +
+            "specified doctor at certain date and time for customer with given id. " +
+            "In order to perform cancellation valid pin number must be provided.")
+    public ResponseEntity<String> cancelAppointment(
+            @Valid @RequestBody AppointmentRequest appointmentReq, @PathVariable Long customerId) {
+        customersService.cancelAppointment(appointmentReq, customerId);
+        return ResponseEntity.ok("Appointment has been removed successfully.");
     }
 
 }
