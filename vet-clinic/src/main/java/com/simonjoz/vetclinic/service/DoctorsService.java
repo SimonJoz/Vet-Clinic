@@ -9,6 +9,7 @@ import com.simonjoz.vetclinic.mappers.PagesMapper;
 import com.simonjoz.vetclinic.repository.DoctorsRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class DoctorsService {
     private final DoctorsRepo doctorsRepo;
     private final AppointmentsService appointmentsService;
 
-
+    @Cacheable("doctor")
     public Doctor getDoctor(Long doctorId) {
         log.info("Fetching doctor with id '{}'.", doctorId);
         Doctor doctor = doctorsRepo.findById(doctorId)
@@ -34,6 +35,7 @@ public class DoctorsService {
         return doctor;
     }
 
+    @Cacheable("doctorsPage")
     public PageDTO<DoctorDTO> getPage(PageRequest pageRequest) {
         log.info("Fetching doctors page: '{}' ", pageRequest);
         Page<DoctorDTO> doctorsPage = doctorsRepo.getDoctorsPage(pageRequest);
@@ -42,6 +44,7 @@ public class DoctorsService {
         return resultPage;
     }
 
+    @Cacheable("doctorAppointmentsPage")
     public PageDTO<AppointmentDTO> getAppointmentsPageById(PageRequest pageRequest, Long doctorId, LocalDate date) {
         throwExceptionIfNotExist(doctorId);
         if (date == null) {
@@ -51,7 +54,6 @@ public class DoctorsService {
         log.debug("Date is present. Performing getAppointmentsPageByDoctorIdForDate() method.");
         return appointmentsService.getAppointmentsPageByDoctorIdForDate(pageRequest, doctorId, date);
     }
-
 
     private void throwExceptionIfNotExist(Long doctorId) {
         if (!doctorsRepo.existsById(doctorId)) {

@@ -16,3 +16,5 @@ spring:
       ddl-auto: create
   application:
     appointment-duration: 30  # value in minutes is required
+  cache:
+    type: none
