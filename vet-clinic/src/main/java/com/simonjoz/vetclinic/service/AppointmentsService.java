@@ -12,6 +12,7 @@ import com.simonjoz.vetclinic.repository.AppointmentsRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,7 @@ public class AppointmentsService {
         return resultPage;
     }
 
+    @CacheEvict(value = "doctorAppointmentsPage", allEntries = true)
     public AppointmentDTO addAppointment(Appointment appointment) {
         log.info("Creating new appointment '{}'.", appointment);
         Appointment savedAppointment = appointmentsRepo.save(appointment);
@@ -81,6 +83,7 @@ public class AppointmentsService {
         throwExceptionIfDateNotAvailability(isAvailable, formattedTimestamp);
     }
 
+    @CacheEvict(value = "doctorAppointmentsPage", allEntries = true)
     public void deleteAppointment(Long customerId, LocalDateTime appointmentTimestamp) {
         log.info("Removing appointment with timestamp '{}' of user with id '{}'.", appointmentTimestamp, customerId);
         appointmentsRepo.deleteByCustomerIdAndTimestamp(customerId, appointmentTimestamp);

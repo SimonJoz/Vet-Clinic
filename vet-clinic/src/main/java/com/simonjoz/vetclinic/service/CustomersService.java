@@ -14,6 +14,7 @@ import com.simonjoz.vetclinic.mappers.PagesMapper;
 import com.simonjoz.vetclinic.repository.CustomersRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class CustomersService {
     private final AppointmentsService appointmentsService;
     private final DoctorsService doctorsService;
 
+    @Cacheable("customer")
     public Customer getCustomer(Long customerId) {
         log.info("Fetching customer with id '{}'.", customerId);
         Customer customer = customersRepo.findById(customerId)
@@ -42,6 +44,7 @@ public class CustomersService {
         return customer;
     }
 
+    @Cacheable("customersPage")
     public PageDTO<CustomerDTO> getPage(PageRequest pageRequest) {
         log.info("Fetching customers page: '{}' ", pageRequest);
         Page<CustomerDTO> doctorsPage = customersRepo.getCustomersPage(pageRequest);

@@ -13,3 +13,6 @@ spring:
     # NOTE: turning it off may result in LazyInitializationException.
     open-in-view: false
 
+  cache:
+    jcache:
+      config: classpath:ehcache.xml
