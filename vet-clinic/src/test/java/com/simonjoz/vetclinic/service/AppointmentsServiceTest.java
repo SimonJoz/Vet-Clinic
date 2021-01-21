@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -79,13 +78,13 @@ class AppointmentsServiceTest {
     void checkDateAvailabilityForDoctorDateIsUnavailable() {
 
         Mockito.doReturn(false).when(appointmentsRepo).isDateAndTimeAvailableForDoctorWithId(
-                anyLong(), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class));
+                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class), any(LocalDateTime.class));
 
         assertThrows(UnavailableDateException.class,
                 () -> appointmentsService.checkDateAvailabilityForDoctor(APPOINTMENT_REQUEST));
 
         Mockito.verify(appointmentsRepo).isDateAndTimeAvailableForDoctorWithId(
-                anyLong(), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class));
+                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class), any(LocalDateTime.class));
 
     }
 

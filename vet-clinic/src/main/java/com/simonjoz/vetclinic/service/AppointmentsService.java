@@ -71,14 +71,23 @@ public class AppointmentsService {
         LocalTime startTime = appointmentReq.getTime().minusMinutes(appointmentDuration);
         LocalTime endTime = appointmentReq.getTime().plusMinutes(appointmentDuration);
 
-        log.debug("Range of time to be check: [start: {}], [end: {}].", startTime, endTime);
+        LocalDateTime startTimestamp = LocalDateTime.of(appointmentReq.getDate(), startTime);
+        LocalDateTime endTimestamp = LocalDateTime.of(appointmentReq.getDate(), endTime);
+        LocalDateTime appointmentTimestamp = LocalDateTime.of(appointmentReq.getDate(), appointmentReq.getTime());
+
+        //  NOTE: In case of midnight ranges e.g(23:50 - 00:50) validation would fail due to checking the same date
+        if (endTime.getHour() == 0) {
+            endTimestamp = LocalDateTime.of(appointmentReq.getDate().plusDays(1), endTime);
+        }
+
+        log.debug("Range of timestamps to be check: [start: {}], [end: {}].", startTimestamp, endTimestamp);
+        log.debug("Actual appointment timestamp: {}.", appointmentTimestamp);
 
         boolean isAvailable = appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(appointmentReq.getDoctorId(),
-                appointmentReq.getDate(), startTime, endTime);
+                startTimestamp, endTimestamp, appointmentTimestamp);
 
         log.debug("Is date available: {}", isAvailable);
 
-        LocalDateTime appointmentTimestamp = LocalDateTime.of(appointmentReq.getDate(), appointmentReq.getTime());
         String formattedTimestamp = appointmentTimestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         throwExceptionIfDateNotAvailability(isAvailable, formattedTimestamp);
     }
