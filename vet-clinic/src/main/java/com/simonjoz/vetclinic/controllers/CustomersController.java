@@ -44,8 +44,7 @@ public class CustomersController {
     @ApiOperation(value = "Schedule appointment", notes = "Method is used to create new appointment " +
             "with specified doctor at certain date and time, for customer with given id. " +
             "In order to make appointment valid pin number must be provided. " +
-            "Default appointment duration is set for 30 minutes and can be modified in properties file. " +
-            "Doctor availability is validated based on appointment duration.")
+            "Doctor availability is resolved base on visit details provided by himself. ")
     public ResponseEntity<AppointmentDTO> makeAppointment(
             @Valid @RequestBody AppointmentRequest appointmentReq, @PathVariable Long customerId) {
         var appointmentDTO = customersService.makeAppointment(appointmentReq, customerId);

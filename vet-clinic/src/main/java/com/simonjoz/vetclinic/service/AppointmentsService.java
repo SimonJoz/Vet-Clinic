@@ -4,6 +4,7 @@ import com.simonjoz.vetclinic.domain.Appointment;
 import com.simonjoz.vetclinic.domain.AppointmentRequest;
 import com.simonjoz.vetclinic.domain.dto.AppointmentDTO;
 import com.simonjoz.vetclinic.domain.dto.PageDTO;
+import com.simonjoz.vetclinic.domain.dto.TimingDetailsDTO;
 import com.simonjoz.vetclinic.exceptions.RemovalFailureException;
 import com.simonjoz.vetclinic.exceptions.UnavailableDateException;
 import com.simonjoz.vetclinic.mappers.CustomerAppointmentMapper;
@@ -11,7 +12,6 @@ import com.simonjoz.vetclinic.mappers.PagesMapper;
 import com.simonjoz.vetclinic.repository.AppointmentsRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,14 +27,8 @@ import java.time.format.DateTimeFormatter;
 @RequiredArgsConstructor
 public class AppointmentsService {
 
-    // NOTE: Injection through field is not recommended but in this case
-    // there is no performance hit as primitive type does not require any dependencies to be injected before initialization.
-    // Must not be final otherwise constructor injection will be performed without require @Value causing exception.
-
-    @Value("${spring.application.appointment-duration}")
-    private long appointmentDuration;
-
     private final AppointmentsRepo appointmentsRepo;
+    private final VisitDetailsService visitDetailsService;
     private final CustomerAppointmentMapper customerAppointmentsMapper;
     private final PagesMapper<AppointmentDTO> pageMapper;
 
@@ -68,17 +62,32 @@ public class AppointmentsService {
     public void checkDateAvailabilityForDoctor(AppointmentRequest appointmentReq) {
         log.info("Checking date and time availability for request: {}", appointmentReq);
 
-        LocalTime startTime = appointmentReq.getTime().minusMinutes(appointmentDuration);
-        LocalTime endTime = appointmentReq.getTime().plusMinutes(appointmentDuration);
+        TimingDetailsDTO timingDetails = visitDetailsService.getTimingDetails(appointmentReq.getDoctorId());
+        final int appointmentDuration = timingDetails.getVisitDurationInMinutes();
+        final LocalTime reqTime = appointmentReq.getTime();
 
-        log.debug("Range of time to be check: [start: {}], [end: {}].", startTime, endTime);
+        checkIsOpen(timingDetails, reqTime);
+
+        final LocalTime startTime = reqTime.minusMinutes(appointmentDuration);
+        final LocalTime endTime = reqTime.plusMinutes(appointmentDuration);
+
+        LocalDateTime startTimestamp = LocalDateTime.of(appointmentReq.getDate(), startTime);
+        LocalDateTime endTimestamp = LocalDateTime.of(appointmentReq.getDate(), endTime);
+        LocalDateTime appointmentTimestamp = LocalDateTime.of(appointmentReq.getDate(), reqTime);
+
+        //  NOTE: In case of midnight ranges e.g(23:50 - 00:50) validation would fail due to checking the same date
+        if (endTime.getHour() == 0) {
+            endTimestamp = LocalDateTime.of(appointmentReq.getDate().plusDays(1), endTime);
+        }
+
+        log.debug("Range of timestamps to be check: [start: {}], [end: {}].", startTimestamp, endTimestamp);
+        log.debug("Actual appointment timestamp: {}.", appointmentTimestamp);
 
         boolean isAvailable = appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(appointmentReq.getDoctorId(),
-                appointmentReq.getDate(), startTime, endTime);
+                startTimestamp, endTimestamp, appointmentTimestamp);
 
         log.debug("Is date available: {}", isAvailable);
 
-        LocalDateTime appointmentTimestamp = LocalDateTime.of(appointmentReq.getDate(), appointmentReq.getTime());
         String formattedTimestamp = appointmentTimestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         throwExceptionIfDateNotAvailability(isAvailable, formattedTimestamp);
     }
@@ -96,9 +105,23 @@ public class AppointmentsService {
         log.info("Removal transaction completed.");
     }
 
+
+    private void checkIsOpen(TimingDetailsDTO timingDetails, LocalTime reqAppointmentTime) {
+        final LocalTime openingAt = timingDetails.getOpeningAt();
+        final LocalTime closingAt = timingDetails.getClosingAt();
+        final int visitDuration = timingDetails.getVisitDurationInMinutes();
+
+        if (reqAppointmentTime.isBefore(openingAt) || reqAppointmentTime.equals(closingAt)
+                || reqAppointmentTime.isAfter(closingAt.minusMinutes(visitDuration))) {
+            throw new UnavailableDateException(String.format(
+                    "Cannot schedule appointment at %s. Visit duration: %s min. Opening times: %s - %s.",
+                    reqAppointmentTime, visitDuration, openingAt, closingAt));
+        }
+    }
+
     private void throwExceptionIfDateNotAvailability(boolean isAvailable, String appointmentTimestamp) {
         if (!isAvailable) {
-            String errMsg = String.format("Cannot make appointment at '%s'. Please try schedule appointment at different time.", appointmentTimestamp);
+            String errMsg = String.format("Date '%s' is already taken. Please try schedule appointment at different time.", appointmentTimestamp);
             throw new UnavailableDateException(errMsg);
         }
     }

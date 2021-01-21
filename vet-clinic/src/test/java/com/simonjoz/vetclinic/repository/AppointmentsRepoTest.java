@@ -13,7 +13,6 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -117,63 +116,64 @@ class AppointmentsRepoTest {
 
     @ParameterizedTest
     @MethodSource("timeRangeSupplierFalseValues")
-    void testIsDateAndTimeAvailableForDoctorWithIdShouldReturnFalse(LocalTime startTime, LocalTime endTime) {
+    void testIsDateAndTimeAvailableForDoctorWithIdShouldReturnFalse(LocalDateTime start, LocalDateTime end) {
         /*
-            Original appointment request time would be the middle of provided range
-                e.g(start - 11:30; end - 12:30; original - 12:00)
+            Original appointment request timestamp is the middle of provided range
+                e.g(start - 2022-01-21 11:30; end - 2022-01-21 12:30; original - 2022-01-21 12:00)
         */
 
         assertFalse(appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(
-                1L, LocalDate.parse("2022-01-21"), startTime, endTime));
+                1L, start, end, LocalDateTime.parse("2022-01-21T12:00")));
 
         assertFalse(appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(
-                2L, LocalDate.parse("2022-01-22"), startTime, endTime));
+                2L, start, end, LocalDateTime.parse("2022-01-22T12:00")));
 
         assertFalse(appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(
-                1L, LocalDate.parse("2022-01-23"), startTime, endTime));
+                1L, start, end, LocalDateTime.parse("2022-01-23T12:00")));
 
         assertFalse(appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(
-                2L, LocalDate.parse("2022-01-24"), startTime, endTime));
+                2L, start, end, LocalDateTime.parse("2022-01-24T12:00")));
     }
 
     private static Stream<Arguments> timeRangeSupplierFalseValues() {
         return Stream.of(
-                Arguments.of(LocalTime.parse("11:30"), LocalTime.parse("12:30")),
-                Arguments.of(LocalTime.parse("11:29"), LocalTime.parse("12:29")),
-                Arguments.of(LocalTime.parse("11:01"), LocalTime.parse("12:01")),
-                Arguments.of(LocalTime.parse("11:20"), LocalTime.parse("12:20")),
-                Arguments.of(LocalTime.parse("11:10"), LocalTime.parse("12:10")),
-                Arguments.of(LocalTime.parse("11:05"), LocalTime.parse("12:05")));
+                Arguments.of(LocalDateTime.parse("2022-01-21T11:30"), LocalDateTime.parse("2022-01-21T12:30")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T11:29"), LocalDateTime.parse("2022-01-21T12:29")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T11:01"), LocalDateTime.parse("2022-01-21T12:01")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T11:20"), LocalDateTime.parse("2022-01-21T12:20")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T11:10"), LocalDateTime.parse("2022-01-21T12:10")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T11:05"), LocalDateTime.parse("2022-01-21T12:05")));
     }
 
     @ParameterizedTest
     @MethodSource("timeRangeSupplierTrueValues")
-    void testIsDateAndTimeAvailableForDoctorWithIdShouldReturnTrue(LocalTime startTime, LocalTime endTime) {
+    void testIsDateAndTimeAvailableForDoctorWithIdShouldReturnTrue(LocalDateTime start, LocalDateTime end) {
         /*
-            Original appointment request time would be the middle of provided  range
-                e.g(start - 12:00; end - 13:00; original - 12:30)
+            Original appointment request timestamp is the middle of provided range
+                e.g(start - 2022-01-21 11:30; end - 2022-01-21 12:30; original - 2022-01-21 12:00)
         */
         assertTrue(appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(
-                1L, LocalDate.parse("2022-01-21"), startTime, endTime));
+                1L, start, end, LocalDateTime.parse("2022-01-21T12:30")));
 
         assertTrue(appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(
-                2L, LocalDate.parse("2022-01-22"), startTime, endTime));
+                2L, start, end, LocalDateTime.parse("2022-01-22T12:30")));
 
         assertTrue(appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(
-                1L, LocalDate.parse("2022-01-23"), startTime, endTime));
+                1L, start, end, LocalDateTime.parse("2022-01-23T12:30")));
 
         assertTrue(appointmentsRepo.isDateAndTimeAvailableForDoctorWithId(
-                2L, LocalDate.parse("2022-01-24"), startTime, endTime));
+                2L, start, end, LocalDateTime.parse("2022-01-24T12:30")));
+
     }
 
     private static Stream<Arguments> timeRangeSupplierTrueValues() {
         return Stream.of(
-                Arguments.of(LocalTime.parse("12:00"), LocalTime.parse("13:00")),
-                Arguments.of(LocalTime.parse("12:35"), LocalTime.parse("13:35")),
-                Arguments.of(LocalTime.parse("12:20"), LocalTime.parse("13:20")),
-                Arguments.of(LocalTime.parse("12:29"), LocalTime.parse("13:29")),
-                Arguments.of(LocalTime.parse("13:00"), LocalTime.parse("14:00")),
-                Arguments.of(LocalTime.parse("12:01"), LocalTime.parse("13:01")));
+                Arguments.of(LocalDateTime.parse("2022-01-21T12:00"), LocalDateTime.parse("2022-01-21T13:00")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T12:35"), LocalDateTime.parse("2022-01-21T13:35")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T12:20"), LocalDateTime.parse("2022-01-21T13:20")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T12:29"), LocalDateTime.parse("2022-01-21T13:29")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T13:00"), LocalDateTime.parse("2022-01-21T14:00")),
+                Arguments.of(LocalDateTime.parse("2022-01-21T12:01"), LocalDateTime.parse("2022-01-21T13:01")));
     }
 
 }

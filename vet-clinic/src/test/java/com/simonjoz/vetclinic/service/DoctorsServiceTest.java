@@ -69,7 +69,10 @@ class DoctorsServiceTest {
 
     @Test
     void tesGetDoctorSuccess() {
-        Doctor expectedDoctor = new Doctor(DOCTOR_ONE_ID, "DR", "DOCTOR1", "SURNAME1", Collections.emptyList());
+        Doctor expectedDoctor = Doctor.builder().id(DOCTOR_ONE_ID).title("DR")
+                .name("DOCTOR1").surname("SURNAME1")
+                .appointments(Collections.emptyList()).build();
+
         Mockito.doReturn(Optional.of(expectedDoctor)).when(doctorsRepo).findById(anyLong());
 
         Doctor actualDoctor = doctorsService.getDoctor(DOCTOR_ONE_ID);

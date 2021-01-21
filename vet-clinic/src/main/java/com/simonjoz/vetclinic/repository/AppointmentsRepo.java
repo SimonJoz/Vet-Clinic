@@ -11,7 +11,6 @@ import org.springframework.data.jpa.repository.Query;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 public interface AppointmentsRepo extends JpaRepository<Appointment, Long> {
 
@@ -24,9 +23,9 @@ public interface AppointmentsRepo extends JpaRepository<Appointment, Long> {
     Page<AppointmentDTO> getDoctorAppointmentsPage(Long doctorId, LocalDate date, Pageable pageable);
 
 
-    @Query("SELECT CASE WHEN count(a.id) = 0 THEN true ELSE false END FROM appointments a " +
-            "WHERE a.doctor.id = :doctorId AND a.scheduledDate = :date AND a.scheduledTime > :startTime AND a.scheduledTime < :endTime")
-    boolean isDateAndTimeAvailableForDoctorWithId(Long doctorId, LocalDate date, LocalTime startTime, LocalTime endTime);
+    @Query("SELECT CASE WHEN count(a.id) = 0 THEN true ELSE false END FROM appointments a WHERE a.doctor.id = :doctorId " +
+            "AND (a.timestamp > :start AND a.timestamp < :end OR a.timestamp = :actual)")
+    boolean isDateAndTimeAvailableForDoctorWithId(Long doctorId, LocalDateTime start, LocalDateTime end, LocalDateTime actual);
 
     @Modifying
     @Transactional

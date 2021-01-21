@@ -1,9 +1,6 @@
 package com.simonjoz.vetclinic.service;
 
-import com.simonjoz.vetclinic.domain.Appointment;
-import com.simonjoz.vetclinic.domain.AppointmentRequest;
-import com.simonjoz.vetclinic.domain.Customer;
-import com.simonjoz.vetclinic.domain.Doctor;
+import com.simonjoz.vetclinic.domain.*;
 import com.simonjoz.vetclinic.domain.dto.AppointmentDTO;
 import com.simonjoz.vetclinic.domain.dto.CustomerDTO;
 import com.simonjoz.vetclinic.domain.dto.PageDTO;
@@ -26,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -173,15 +171,24 @@ class CustomersServiceTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 5, 10, 40, 120})
     void testMakeAppointmentDateValidTime(int value) {
-        Doctor doctor = new Doctor(DOCTOR_ONE_ID, "DR", "DOCTOR1", "SURNAME1", Collections.emptyList());
 
-        var invalidRequest = new AppointmentRequest(VALID_PIN, DOCTOR_ONE_ID, "some note here",
+        VisitDetails visitDetails = VisitDetails.builder()
+                .id(1L).doctor(null)
+                .openingAt(LocalTime.of(6, 0))
+                .closingAt(LocalTime.of(16, 0))
+                .visitDurationInMinutes(30)
+                .visitPrice(BigDecimal.TEN).build();
+
+        Doctor doctor = new Doctor(DOCTOR_ONE_ID, "DR", "DOCTOR1", "SURNAME1", visitDetails, Collections.emptyList());
+        visitDetails.setDoctor(doctor);
+
+        var validRequest = new AppointmentRequest(VALID_PIN, DOCTOR_ONE_ID, "some note here",
                 LocalDate.now().plusDays(value), LocalTime.now().minusMinutes(value));
 
         Mockito.doReturn(Optional.of(CUSTOMER_ONE)).when(customersRepo).findById(anyLong());
         Mockito.doReturn(Optional.of(doctor)).when(doctorRepo).findById(anyLong());
 
-        customersService.makeAppointment(invalidRequest, CUSTOMER_ONE_ID);
+        customersService.makeAppointment(validRequest, CUSTOMER_ONE_ID);
         Mockito.verify(customersRepo).findById(anyLong());
         Mockito.verify(appointmentsService).checkDateAvailabilityForDoctor(any(AppointmentRequest.class));
         Mockito.verify(doctorRepo).findById(anyLong());
@@ -190,7 +197,17 @@ class CustomersServiceTest {
 
     @Test
     void testMakeAppointmentSuccess() {
-        Doctor expectedDoctor = new Doctor(DOCTOR_ONE_ID, "DR", "DOCTOR1", "SURNAME1", Collections.emptyList());
+        VisitDetails visitDetails = VisitDetails.builder()
+                .id(1L).doctor(null)
+                .openingAt(LocalTime.of(6, 0))
+                .closingAt(LocalTime.of(16, 0))
+                .visitDurationInMinutes(30)
+                .visitPrice(BigDecimal.TEN).build();
+
+        Doctor expectedDoctor = new Doctor(DOCTOR_ONE_ID, "DR", "DOCTOR1",
+                "SURNAME1", visitDetails, Collections.emptyList());
+        visitDetails.setDoctor(expectedDoctor);
+
         Mockito.doReturn(Optional.of(CUSTOMER_ONE)).when(customersRepo).findById(anyLong());
         Mockito.doReturn(Optional.of(expectedDoctor)).when(doctorRepo).findById(anyLong());
 

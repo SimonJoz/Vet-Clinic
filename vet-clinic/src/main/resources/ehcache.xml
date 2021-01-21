@@ -22,4 +22,11 @@
     <cache alias="doctorsPage" uses-template="default"/>
     <cache alias="doctorAppointmentsPage" uses-template="default"/>
 
+    <cache alias="doctorTimeDetails">
+        <expiry>
+            <ttl unit="hours">4</ttl>
+        </expiry>
+        <heap unit="entries">1000</heap>
+    </cache>
+
 </config>

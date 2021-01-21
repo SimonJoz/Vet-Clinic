@@ -10,6 +10,7 @@ import java.util.List;
 
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity(name = "doctors")
@@ -28,7 +29,11 @@ public class Doctor {
     @NotBlank(message = "Surname is required.")
     private String surname;
 
+    @OneToOne(mappedBy = "doctor")
+    private VisitDetails visitDetails;
+
     @JsonIgnore
+    @Builder.Default
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "doctor")
     private List<Appointment> appointments = new ArrayList<>();
