@@ -5,9 +5,11 @@ import com.simonjoz.vetclinic.domain.AppointmentRequest;
 import com.simonjoz.vetclinic.domain.Customer;
 import com.simonjoz.vetclinic.domain.Doctor;
 import com.simonjoz.vetclinic.domain.dto.AppointmentDTO;
+import com.simonjoz.vetclinic.domain.dto.PageDTO;
 import com.simonjoz.vetclinic.exceptions.RemovalFailureException;
 import com.simonjoz.vetclinic.exceptions.UnavailableDateException;
 import com.simonjoz.vetclinic.mappers.CustomerAppointmentMapper;
+import com.simonjoz.vetclinic.mappers.PagesMapper;
 import com.simonjoz.vetclinic.repository.AppointmentsRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,8 +28,7 @@ import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 
@@ -98,6 +102,57 @@ class AppointmentsServiceTest {
 
         Mockito.verify(appointmentsRepo).deleteByCustomerIdAndTimestamp(anyLong(), any(LocalDateTime.class));
         Mockito.verify(appointmentsRepo).existsByCustomerIdAndTimestamp(anyLong(), any(LocalDateTime.class));
+    }
+
+    @Test
+    void testGetAppointmentsPageByDoctorId() {
+        PageRequest pageRequest = PageRequest.of(0, 1);
+        AppointmentDTO appointmentDTO = new AppointmentDTO(1L, "note", LocalDate.now(),
+                LocalTime.now(), "DOCTOR1", "SURNAME1");
+        List<AppointmentDTO> expectedContent = List.of(appointmentDTO);
+
+        Page<AppointmentDTO> page = new PageImpl<>(expectedContent, pageRequest, 1);
+        Mockito.doReturn(page).when(appointmentsRepo).getDoctorAppointmentsPage(1L, pageRequest);
+        PagesMapper<AppointmentDTO> pagesMapper = new PagesMapper<>();
+        PageDTO<AppointmentDTO> expectedPage = pagesMapper.map(page);
+        PageDTO<AppointmentDTO> actualPage = appointmentsService.getAppointmentsPageByDoctorId(pageRequest, 1L);
+
+        assertFalse(actualPage.isEmpty());
+        assertTrue(actualPage.isFirst());
+        assertTrue(actualPage.isLast());
+        assertEquals(expectedPage, actualPage);
+        assertEquals(expectedContent, actualPage.getContent());
+        assertEquals(1, actualPage.getTotalElements());
+        assertEquals(1, actualPage.getTotalPages());
+
+        Mockito.verify(appointmentsRepo).getDoctorAppointmentsPage(1L, pageRequest);
+    }
+
+
+    @Test
+    void testGetAppointmentsPageByDoctorIdForDate() {
+        PageRequest pageRequest = PageRequest.of(0, 1);
+        AppointmentDTO appointmentDTO = new AppointmentDTO(1L, "note", LocalDate.now(),
+                LocalTime.now(), "DOCTOR1", "SURNAME1");
+        List<AppointmentDTO> expectedContent = List.of(appointmentDTO);
+
+        Page<AppointmentDTO> page = new PageImpl<>(expectedContent, pageRequest, 1);
+        Mockito.doReturn(page).when(appointmentsRepo).getDoctorAppointmentsPage(1L, LocalDate.now(), pageRequest);
+
+        PagesMapper<AppointmentDTO> pagesMapper = new PagesMapper<>();
+        PageDTO<AppointmentDTO> expectedPage = pagesMapper.map(page);
+        PageDTO<AppointmentDTO> actualPage = appointmentsService
+                .getAppointmentsPageByDoctorIdForDate(pageRequest, 1L, LocalDate.now());
+
+        assertFalse(actualPage.isEmpty());
+        assertTrue(actualPage.isFirst());
+        assertTrue(actualPage.isLast());
+        assertEquals(expectedPage, actualPage);
+        assertEquals(expectedContent, actualPage.getContent());
+        assertEquals(1, actualPage.getTotalElements());
+        assertEquals(1, actualPage.getTotalPages());
+
+        Mockito.verify(appointmentsRepo).getDoctorAppointmentsPage(1L, LocalDate.now(), pageRequest);
     }
 
 }
